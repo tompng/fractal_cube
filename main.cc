@@ -1,7 +1,9 @@
 #include <stdio.h>
-#include "bmp.h"
+#include "image.h"
 int main(){
-  Image *img = createImage(1234, 567);
+  Image *img = new Image(1234, 567);
+  Array2D<double> *depth = new Array2D<double>(123,123);
+  delete depth;
   for(int x=0;x<img->w;x++)for(int y=0;y<img->h;y++){
     double xx=(double)x/img->w;
     double yy=(double)y/img->h;
@@ -15,6 +17,6 @@ int main(){
     img->data[x][y] = color;
   }
   FILE *fp = fopen("out.bmp", "w");
-  saveImage(img, fp);
+  img->save(fp);
   fclose(fp);
 }
