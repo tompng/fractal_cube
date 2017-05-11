@@ -42,13 +42,20 @@ public:
       code\
     }\
   };
-  void drawCircle(double cx, double cy, double cz, double cr){
+  void drawSphere(double cx, double cy, double cz, double cr){
     SPHERE_EACH({
       double d=depth->data[ix][iy];
       if(!d||z<d){
         depth->data[ix][iy]=z;
       }
     })
+  }
+  bool testSphere(double cx, double cy, double cz, double cr){
+    SPHERE_EACH({
+      double d=depth->data[ix][iy];
+      if(!d||z<d)return true;
+    })
+    return false;
   }
   void drawPolygon(Point a, Point b, Point c){
     if(a.z<0||b.z<0||c.z<0)return;
@@ -94,17 +101,19 @@ public:
 int main(){
   Image *img = new Image(1024, 1024);
   Canvas canvas(1024);
-  canvas.drawCircle(-0.1,0.12,0.6,0.1);
-  canvas.drawCircle(0.12,-0.11,0.7,0.15);
-  canvas.drawCircle(0.14,0.13,0.7,0.12);
-  canvas.drawCircle(-0.13,0,0.6,0.13);
-  canvas.drawCircle(-0.11,-0.12,0.6,0.11);
+  canvas.drawSphere(-0.1,0.12,0.6,0.1);
+  canvas.drawSphere(0.12,-0.11,0.7,0.15);
+  canvas.drawSphere(0.14,0.13,0.7,0.12);
+  canvas.drawSphere(-0.13,0,0.6,0.13);
+  canvas.drawSphere(-0.11,-0.12,0.6,0.11);
   Point a={0.2,0.3,0.6};
   Point b={-0.4,0.1,0.7};
   Point c={0.3,-0.2,0.8};
-  canvas.drawCircle(a.x,a.y,a.z,0.06);
-  canvas.drawCircle(b.x,b.y,b.z,0.06);
-  canvas.drawCircle(c.x,c.y,c.z,0.06);
+  canvas.drawSphere(a.x,a.y,a.z,0.06);
+  canvas.drawSphere(b.x,b.y,b.z,0.06);
+  canvas.drawSphere(c.x,c.y,c.z,0.06);
+  printf("%d\n",canvas.testSphere(c.x,c.y,c.z,0.05));
+  printf("%d\n",canvas.testSphere(c.x,c.y+0.02,c.z,0.05));
   canvas.drawPolygon(a,b,c);
   for(int x=0;x<img->w;x++)for(int y=0;y<img->h;y++){
     Color color={
