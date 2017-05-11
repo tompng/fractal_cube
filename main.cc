@@ -50,6 +50,9 @@ public:
       }
     })
   }
+  void clear(){
+    for(int x=0;x<size;x++)for(int y=0;y<size;y++)depth->data[x][y]=color->data[x][y]=0;
+  }
   bool testSphere(double cx, double cy, double cz, double cr){
     SPHERE_EACH({
       double d=depth->data[ix][iy];
@@ -99,30 +102,31 @@ public:
 
 
 double xycos,xysin,zcos,zsin,fracScale,fracBottomR,fracBottomZ;
-Point fracSubs[4];
+Point fracSubs[6];
 void initCam(double xytheta,double ztheta,double fscale){
   fracScale=fscale;
   xycos=cos(xytheta);xysin=sin(xytheta);
   zcos=cos(ztheta);zsin=sin(ztheta);
-  fracBottomR=(1-fracScale)*sqrt(2)*2/3;
-  fracBottomZ=-(1-fracScale)/3;
-  fracSubs[0]=(Point){0.0,0.0,1-fracScale};
-  fracSubs[1]=(Point){fracBottomR,0,fracBottomZ};
-  fracSubs[2]=(Point){-fracBottomR/2,fracBottomR*sqrt(3)/2,fracBottomZ};
-  fracSubs[3]=(Point){-fracBottomR/2,-fracBottomR*sqrt(3)/2,fracBottomZ};
+  double l=1-fracScale;
+  fracSubs[0]=(Point){+l,0,0};
+  fracSubs[1]=(Point){-l,0,0};
+  fracSubs[2]=(Point){0,+l,0};
+  fracSubs[3]=(Point){0,-l,0};
+  fracSubs[4]=(Point){0,0,+l};
+  fracSubs[5]=(Point){0,0,-l};
 }
 
 void fractal(Canvas*canvas, double x, double y, double z, double r){
   double tx,ty,tz;
   tx=x*xycos-y*xysin;
   ty=x*xysin+y*xycos;
-  tz=z*zcos-y*zsin;
-  ty=z*zsin+y*zcos;
+  tz=z*zcos-ty*zsin;
+  ty=z*zsin+ty*zcos;
   tz+=2;
   if(r/tz<0.001){canvas->drawSphere(tx,ty,tz,r);return;}
   if(!canvas->testSphere(tx,ty,tz,r))return;
   canvas->drawSphere(tx,ty,tz,r*(1-fracScale));
-  for(int i=0;i<4;i++){
+  for(int i=0;i<6;i++){
     Point p=fracSubs[i];
     fractal(canvas,x+r*p.x,y+r*p.y,z+r*p.z,r*fracScale);
   }
@@ -146,12 +150,18 @@ void canvas2img(Canvas*canvas,Image*img){
   }
 }
 int main(){
-  initCam(0.3,0.2,0.4);
   Image *img = new Image(1024, 1024);
   Canvas canvas(1024);
-  fractal(&canvas,0,0,0,1);
-  canvas2img(&canvas,img);
-  FILE *fp = fopen("out.bmp", "w");
-  img->save(fp);
-  fclose(fp);
+  for(int i=0;i<100;i++){
+    canvas.clear();
+    initCam(0.3+0.1*i,M_PI/2+0.5*cos(i*0.1),i*0.01*0.6);
+    fractal(&canvas,0,0,0,1);
+    canvas2img(&canvas,img);
+    char filename[128];
+    sprintf(filename,"out/%d.bmp",i);
+    FILE *fp = fopen(filename, "w");
+    img->save(fp);
+    fclose(fp);
+  }
+  //ffmpeg -i out/%d.bmp -s 512x512 -r 40 -vf format=yuv420p out.mp4
 }
