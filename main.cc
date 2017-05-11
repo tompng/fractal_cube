@@ -98,31 +98,59 @@ public:
 
 
 
-int main(){
-  Image *img = new Image(1024, 1024);
-  Canvas canvas(1024);
-  canvas.drawSphere(-0.1,0.12,0.6,0.1);
-  canvas.drawSphere(0.12,-0.11,0.7,0.15);
-  canvas.drawSphere(0.14,0.13,0.7,0.12);
-  canvas.drawSphere(-0.13,0,0.6,0.13);
-  canvas.drawSphere(-0.11,-0.12,0.6,0.11);
-  Point a={0.2,0.3,0.6};
-  Point b={-0.4,0.1,0.7};
-  Point c={0.3,-0.2,0.8};
-  canvas.drawSphere(a.x,a.y,a.z,0.06);
-  canvas.drawSphere(b.x,b.y,b.z,0.06);
-  canvas.drawSphere(c.x,c.y,c.z,0.06);
-  printf("%d\n",canvas.testSphere(c.x,c.y,c.z,0.05));
-  printf("%d\n",canvas.testSphere(c.x,c.y+0.02,c.z,0.05));
-  canvas.drawPolygon(a,b,c);
+double xycos,xysin,zcos,zsin,fracScale,fracBottomR,fracBottomZ;
+Point fracSubs[4];
+void initCam(double xytheta,double ztheta,double fscale){
+  fracScale=fscale;
+  xycos=cos(xytheta);xysin=sin(xytheta);
+  zcos=cos(ztheta);zsin=sin(ztheta);
+  fracBottomR=(1-fracScale)*sqrt(2)*2/3;
+  fracBottomZ=-(1-fracScale)/3;
+  fracSubs[0]=(Point){0.0,0.0,1-fracScale};
+  fracSubs[1]=(Point){fracBottomR,0,fracBottomZ};
+  fracSubs[2]=(Point){-fracBottomR/2,fracBottomR*sqrt(3)/2,fracBottomZ};
+  fracSubs[3]=(Point){-fracBottomR/2,-fracBottomR*sqrt(3)/2,fracBottomZ};
+}
+
+void fractal(Canvas*canvas, double x, double y, double z, double r){
+  double tx,ty,tz;
+  tx=x*xycos-y*xysin;
+  ty=x*xysin+y*xycos;
+  tz=z*zcos-y*zsin;
+  ty=z*zsin+y*zcos;
+  tz+=2;
+  if(r/tz<0.001){canvas->drawSphere(tx,ty,tz,r);return;}
+  if(!canvas->testSphere(tx,ty,tz,r))return;
+  canvas->drawSphere(tx,ty,tz,r*(1-fracScale));
+  for(int i=0;i<4;i++){
+    Point p=fracSubs[i];
+    fractal(canvas,x+r*p.x,y+r*p.y,z+r*p.z,r*fracScale);
+  }
+}
+
+void canvas2img(Canvas*canvas,Image*img){
+  double min=0;
   for(int x=0;x<img->w;x++)for(int y=0;y<img->h;y++){
+    double d=canvas->depth->data[x][y];
+    if(!min||(d&&d<min))min=d;
+  }
+  for(int x=0;x<img->w;x++)for(int y=0;y<img->h;y++){
+    double d=canvas->depth->data[x][y];
+    double c=d?1/(1+4*(d-min)):0;
     Color color={
-      0xff*canvas.depth->data[x][y],
-      0xff*(0.5+0.5*sin(40*canvas.depth->data[x][y])),
-      0xff*(0.5+0.5*sin(120*canvas.depth->data[x][y]))
+      0xff*c,
+      0xff*(c*0.8+0.2*(0.5+0.5*sin(17*canvas->depth->data[x][y]))),
+      0xff*(c*0.8+0.2*(0.5+0.5*sin(32*canvas->depth->data[x][y])))
     };
     img->data[x][y] = color;
   }
+}
+int main(){
+  initCam(0.3,0.2,0.4);
+  Image *img = new Image(1024, 1024);
+  Canvas canvas(1024);
+  fractal(&canvas,0,0,0,1);
+  canvas2img(&canvas,img);
   FILE *fp = fopen("out.bmp", "w");
   img->save(fp);
   fclose(fp);
