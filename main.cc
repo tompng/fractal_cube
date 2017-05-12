@@ -102,32 +102,61 @@ public:
 
 
 double xycos,xysin,zcos,zsin,fracScale,fracBottomR,fracBottomZ;
-Point fracSubs[6];
+#define SUBCOUNT 8
+Point fracSubs[SUBCOUNT];
 void initCam(double xytheta,double ztheta,double fscale){
   fracScale=fscale;
   xycos=cos(xytheta);xysin=sin(xytheta);
   zcos=cos(ztheta);zsin=sin(ztheta);
   double l=1-fracScale;
-  fracSubs[0]=(Point){+l,0,0};
-  fracSubs[1]=(Point){-l,0,0};
-  fracSubs[2]=(Point){0,+l,0};
-  fracSubs[3]=(Point){0,-l,0};
-  fracSubs[4]=(Point){0,0,+l};
-  fracSubs[5]=(Point){0,0,-l};
+  l/=sqrt(3);
+  for(int i=0;i<8;i++){
+    fracSubs[i]=(Point){l*(i%2*2-1),l*(i/2%2*2-1),l*(i/4%2*2-1)};
+  }
+}
+
+void trans(double x,double y,double z,double*tx,double*ty,double*tz){
+  double _ty;
+  *tx=x*xycos-y*xysin;
+  _ty=x*xysin+y*xycos;
+  *ty=z*zsin+_ty*zcos;
+  *tz=z*zcos-_ty*zsin+2;
+}
+void sort(int n,double*arr,int*indices){
+  for(int i=0;i<n;i++)indices[i]=i;
+  for(int i=0;i<n-1;i++){
+    int ii=indices[i];
+    double ai=arr[ii];
+    for(int j=i+1;j<n;j++){
+      int jj=indices[j];
+      double aj=arr[jj];
+      if(aj<ai){
+        indices[i]=jj;
+        indices[j]=ii;
+        ii=jj;
+        ai=aj;
+      }
+    }
+  }
 }
 
 void fractal(Canvas*canvas, double x, double y, double z, double r){
   double tx,ty,tz;
-  tx=x*xycos-y*xysin;
-  ty=x*xysin+y*xycos;
-  tz=z*zcos-ty*zsin;
-  ty=z*zsin+ty*zcos;
-  tz+=2;
+  trans(x,y,z,&tx,&ty,&tz);
   if(r/tz<0.001){canvas->drawSphere(tx,ty,tz,r);return;}
   if(!canvas->testSphere(tx,ty,tz,r))return;
   canvas->drawSphere(tx,ty,tz,r*(1-fracScale));
-  for(int i=0;i<6;i++){
+  double dist[SUBCOUNT];
+  int sorted[SUBCOUNT];
+  for(int i=0;i<SUBCOUNT;i++){
     Point p=fracSubs[i];
+    double tx,ty,tz;
+    trans(x+r*p.x,y+r*p.y,z+r*p.z,&tx,&ty,&tz);
+    dist[i]=tz;
+  }
+  sort(SUBCOUNT,dist,sorted);
+  for(int i=0;i<SUBCOUNT;i++){
+    Point p=fracSubs[sorted[i]];
     fractal(canvas,x+r*p.x,y+r*p.y,z+r*p.z,r*fracScale);
   }
 }
@@ -152,9 +181,11 @@ void canvas2img(Canvas*canvas,Image*img){
 int main(){
   Image *img = new Image(1024, 1024);
   Canvas canvas(1024);
-  for(int i=0;i<100;i++){
+  for(int i=0;i<=100;i++){
     canvas.clear();
-    initCam(0.3+0.1*i,M_PI/2+0.5*cos(i*0.1),i*0.01*0.6);
+    double t=i/100.0;
+    t*=2-t;
+    initCam(0.3+10*t,M_PI/2+cos(4*t),t*0.5);
     fractal(&canvas,0,0,0,1);
     canvas2img(&canvas,img);
     char filename[128];
@@ -162,6 +193,8 @@ int main(){
     FILE *fp = fopen(filename, "w");
     img->save(fp);
     fclose(fp);
+    printf("%d\n",i);
   }
-  //ffmpeg -i out/%d.bmp -s 512x512 -r 40 -vf format=yuv420p out.mp4
+  // g++ -O3 main.cc && ./a.out
+  // ffmpeg -i out/%d.bmp -s 512x512 -r 40 -vf format=yuv420p out.mp4
 }
