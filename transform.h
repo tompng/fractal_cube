@@ -62,20 +62,14 @@ public:
     matrix.identity();
   }
   void scale(double s){
-    position.x *= s;
-    position.y *= s;
-    position.z *= s;
     scaleRatio *= s;
   }
   void translate(Point p){
-    position.x += p.x;
-    position.y += p.y;
-    position.z += p.z;
+    position = trans(p);
   }
   void rotate(double nx, double ny, double nz, double rot){
     Matrix3 rotate(nx, ny, nz, rot);
-    position = rotate.trans(position);
-    matrix = rotate.mult(matrix);
+    matrix = matrix.mult(rotate);
   }
   void rotate(double x, double y, double z){
     double r=sqrt(x*x+y*y+z*z);

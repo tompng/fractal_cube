@@ -35,7 +35,7 @@ void sort(int n,double*arr,int*indices){
   }
 }
 
-int CUBE[12][3][3]={
+Point CUBE[12][3]={
   {{+1,+1,+1},{+1,-1,+1},{+1,-1,-1}},
   {{+1,+1,+1},{+1,+1,-1},{+1,-1,-1}},
   {{-1,+1,+1},{-1,-1,+1},{-1,-1,-1}},
@@ -51,7 +51,7 @@ int CUBE[12][3][3]={
   {{+1,-1,+1},{+1,-1,-1},{-1,-1,-1}},
   {{+1,-1,+1},{-1,-1,+1},{-1,-1,-1}},
 };
-int OCTAHEDRAL[8][3][3]={
+Point OCTAHEDRAL[8][3]={
   {{-1,0,0},{0,-1,0},{0,0,-1}},
   {{-1,0,0},{0,-1,0},{0,0,+1}},
   {{-1,0,0},{0,+1,0},{0,0,-1}},
@@ -62,28 +62,31 @@ int OCTAHEDRAL[8][3][3]={
   {{+1,0,0},{0,+1,0},{0,0,+1}}
 };
 
-void fractal(Renderer*renderer, double x, double y, double z, double r){
-  double distance = renderer->camera.distance((Point){x,y,z});
-  if(r/distance<0.001){renderer->drawSphere((Point){x,y,z},r);return;}
-  if(!renderer->testSphere((Point){x,y,z},r))return;
-  double l=r*(1-fracScale)/1.7;
+void fractal(Graphics3D g){
+  double pixel = g.pixelSize();
+  if(pixel<1){g.sphere(1);return;}
+  if(!g.test(1))return;
+  double l=(1-fracScale)/1.7;
+  Graphics3D g2=g;
+  g2.scale(l);
   for(int i=0;i<sizeof(CUBE)/sizeof(CUBE[0]);i++){
-    Point p[3];
-    for(int j=0;j<3;j++){
-      p[j]=(Point){x+l*CUBE[i][j][0],y+l*CUBE[i][j][1],z+l*CUBE[i][j][2]};
-    }
-    renderer->drawTriangle(p[0],p[1],p[2]);
+    g2.triangle(CUBE[i][0],CUBE[i][1],CUBE[i][2]);
   }
   double dist[SUBCOUNT];
   int sorted[SUBCOUNT];
   for(int i=0;i<SUBCOUNT;i++){
     Point p=fracSubs[i];
-    dist[i]=renderer->camera.distance((Point){x+r*p.x,y+r*p.y,z+r*p.z});
+    dist[i]=g.cameraDistance(p);
   }
   sort(SUBCOUNT,dist,sorted);
   for(int i=0;i<SUBCOUNT;i++){
-    Point p=fracSubs[sorted[i]];
-    fractal(renderer,x+r*p.x,y+r*p.y,z+r*p.z,r*fracScale);
+    Graphics3D g2=g;
+    g2.translate(fracSubs[sorted[i]]);
+    g2.scale(fracScale);
+    int ii=sorted[i];
+    double rot=fracScale*16;
+    g2.rotate(sin(ii*12345+6)*rot,sin(ii*78901+2)*rot,sin(ii*23456+7)*rot);
+    fractal(g2);
   }
 }
 
@@ -109,15 +112,15 @@ void renderer2img(Renderer*renderer,Image*img){
 int main(){
   Image *img = new Image(1024, 1024);
   Renderer renderer(1024);
-  Graphics3D g(&renderer);
   for(int i=0;i<=120;i++){
     renderer.clear();
     double t=i/120.0;
     t*=2-t;
     double t2=i/100.0;t2=t2>1?1:t2;t2*=2-t2;
     renderer.camera.set(0.3+10*t, M_PI/2+cos(4*t), 2);
+    Graphics3D g(&renderer);
     setFractal(t2*0.5);
-    fractal(&renderer,0,0,0,1);
+    fractal(g);
     renderer2img(&renderer,img);
     char filename[128];
     sprintf(filename,"out/%d.bmp",i);

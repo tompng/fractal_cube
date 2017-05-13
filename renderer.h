@@ -8,9 +8,9 @@ public:
   void set(double rotxy, double rotz, double camz=2, double _zoom=2){
     zoom=_zoom;
     transform.identity();
-    transform.rotate(1,0,0,M_PI/2+rotz);
-    transform.rotate(0,1,0,rotxy);
     transform.translate((Point){0,0,zoom});
+    transform.rotate(0,1,0,rotxy);
+    transform.rotate(1,0,0,M_PI/2+rotz);
   }
   double distance(Point p){
     Point tpos = transform.trans(p);
@@ -132,9 +132,27 @@ public:
   void rotate(double nx, double ny, double nz, double rot){transform.rotate(nx,ny,nz,rot);}
   void rotate(double x, double y, double z){transform.rotate(x,y,z);}
   void translate(Point p){transform.translate(p);}
-  double renderSize(Point p){
+  double pixelSize(Point p){
+    return renderer->size*transform.scaleRatio/cameraDistance(p)*renderer->camera.zoom;
+  }
+  double cameraDistance(Point p){
     Point gpos = transform.trans(p);
     Point cpos = renderer->camera.transform.trans(gpos);
-    return renderer->size/cpos.z*renderer->camera.zoom;
+    return cpos.z;
   }
+  double pixelSize(){return pixelSize((Point){0,0,0});}
+  double cameraDistance(){return cameraDistance((Point){0,0,0});}
+  bool test(Point p, double r){
+    return renderer->testSphere(transform.trans(p), transform.scaleRatio*r);
+  }
+  void sphere(Point p, double r){
+    renderer->drawSphere(transform.trans(p), transform.scaleRatio*r);
+  }
+  bool test(double r){return test((Point){0, 0, 0}, r);}
+  void sphere(double r){return sphere((Point){0, 0, 0}, r);}
+  void triangle(Point a, Point b, Point c){
+    renderer->drawTriangle(transform.trans(a), transform.trans(b), transform.trans(c));
+  }
+  void cube(double size){}
+  void octahedral(double size){}
 };
