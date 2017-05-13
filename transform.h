@@ -20,7 +20,7 @@ public:
   }
   void rotate(double nx, double ny, double nz, double rot){
     Matrix3 matrix(nx,ny,nz,rot);
-    Matrix3 result = matrix.mult(*this);
+    Matrix3 result=matrix.mult(*this);
     for(int i=0;i<3;i++)for(int j=0;j<3;j++)m[i][j]=result.m[i][j];
   }
   void rotate(double x, double y, double z){
@@ -48,22 +48,29 @@ public:
 class Transform{
 public:
   Point position;
+  double scaleRatio;
   Matrix3 matrix;
-  Transform(){}
-  Transform(Point p,Matrix3 m){
+  Transform(){scaleRatio = 1;}
+  Transform(Point p,double s,Matrix3 m){
+    scaleRatio = s;
     position = p;
     matrix = m;
   }
   void identity(){
     position = (Point){0,0,0};
+    scaleRatio = 1;
     matrix.identity();
   }
   void scale(double s){
-    position.x*=s;position.y*=s;position.z*=s;
-    matrix.scale(s);
+    position.x *= s;
+    position.y *= s;
+    position.z *= s;
+    scaleRatio *= s;
   }
   void translate(Point p){
-    position.x+=p.x;position.y+=p.y;position.z+=p.z;
+    position.x += p.x;
+    position.y += p.y;
+    position.z += p.z;
   }
   void rotate(double nx, double ny, double nz, double rot){
     Matrix3 rotate(nx, ny, nz, rot);
@@ -71,10 +78,10 @@ public:
     matrix = rotate.mult(matrix);
   }
   Transform mult(Transform t){
-    return Transform(trans(t.position), matrix.mult(t.matrix));
+    return Transform(trans(t.position), scaleRatio*t.scaleRatio, matrix.mult(t.matrix));
   }
   Point trans(Point p){
     p=matrix.trans(p);
-    return (Point){position.x+p.x, position.y+p.y, position.z+p.z};
+    return (Point){position.x+scaleRatio*p.x, position.y+scaleRatio*p.y, position.z+scaleRatio*p.z};
   }
 };

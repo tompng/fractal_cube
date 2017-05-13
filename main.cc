@@ -63,7 +63,6 @@ int OCTAHEDRAL[8][3][3]={
   {{+1,0,0},{0,+1,0},{0,0,+1}}
 };
 
-
 void fractal(Renderer*canvas, double x, double y, double z, double r){
   double distance = canvas->camera.distance((Point){x,y,z});
   if(r/distance<0.001){canvas->drawSphere((Point){x,y,z},r);return;}
