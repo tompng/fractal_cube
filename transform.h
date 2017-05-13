@@ -5,14 +5,15 @@ typedef struct{double x,y,z;}Point;
 class Matrix3{
 public:
   double m[3][3];
-  Matrix3(){
-    for(int i=0;i<3;i++)for(int j=0;j<3;j++)m[i][j]=i==j;
-  }
+  Matrix3(){identity();}
   Matrix3(double nx, double ny, double nz, double rot){
     double c=cos(rot),s=sin(rot);
     m[0][0]=nx*nx*(1-c)+c;    m[0][1]=nx*ny*(1-c)-nz*s; m[0][2]=nz*nx*(1-c)+ny*s;
     m[1][0]=nx*ny*(1-c)+nz*s; m[1][1]=ny*ny*(1-c)+c;    m[1][2]=ny*nz*(1-c)-nx*s;
     m[2][0]=nz*nx*(1-c)-ny*s; m[2][1]=ny*nz*(1-c)+nx*s; m[2][2]=nz*nz*(1-c)+c;
+  }
+  void identity(){
+    for(int i=0;i<3;i++)for(int j=0;j<3;j++)m[i][j]=i==j;
   }
   void scale(double s){
     for(int i=0;i<3;i++)for(int j=0;j<3;j++)m[i][j]*=s;
@@ -53,6 +54,10 @@ public:
     position = p;
     matrix = m;
   }
+  void identity(){
+    position = (Point){0,0,0};
+    matrix.identity();
+  }
   void scale(double s){
     position.x*=s;position.y*=s;position.z*=s;
     matrix.scale(s);
@@ -71,21 +76,5 @@ public:
   Point trans(Point p){
     p=matrix.trans(p);
     return (Point){position.x+p.x, position.y+p.y, position.z+p.z};
-  }
-};
-
-class Camera{
-  Transform transform;
-  double zoom;
-  Camera(double z=2){zoom=z;}
-  void set(double rotxy, double rotz, double camz=2, double _zoom=2){
-    zoom=_zoom;
-    transform.rotate(1,0,0,M_PI/2+rotz);
-    transform.rotate(0,1,0,rotxy);
-    transform.translate((Point){0,0,zoom});
-  }
-  double distance(Point p){
-    Point tpos = transform.trans(p);
-    return tpos.z;
   }
 };
