@@ -123,6 +123,31 @@ public:
   }
 };
 
+Vec3 CUBE_COORDS[12][3]={
+  {{+1,+1,+1},{+1,-1,+1},{+1,-1,-1}},
+  {{+1,+1,+1},{+1,+1,-1},{+1,-1,-1}},
+  {{-1,+1,+1},{-1,-1,+1},{-1,-1,-1}},
+  {{-1,+1,+1},{-1,+1,-1},{-1,-1,-1}},
+  {{+1,+1,+1},{-1,+1,+1},{-1,-1,+1}},
+  {{+1,+1,+1},{+1,-1,+1},{-1,-1,+1}},
+  {{+1,+1,-1},{-1,+1,-1},{-1,-1,-1}},
+  {{+1,+1,-1},{+1,-1,-1},{-1,-1,-1}},
+  {{+1,+1,+1},{+1,+1,-1},{-1,+1,-1}},
+  {{+1,+1,+1},{-1,+1,+1},{-1,+1,-1}},
+  {{+1,-1,+1},{+1,-1,-1},{-1,-1,-1}},
+  {{+1,-1,+1},{-1,-1,+1},{-1,-1,-1}}
+};
+Vec3 OCTAHEDRON_COORDS[8][3]={
+  {{-1,0,0},{0,-1,0},{0,0,-1}},
+  {{-1,0,0},{0,-1,0},{0,0,+1}},
+  {{-1,0,0},{0,+1,0},{0,0,-1}},
+  {{-1,0,0},{0,+1,0},{0,0,+1}},
+  {{+1,0,0},{0,-1,0},{0,0,-1}},
+  {{+1,0,0},{0,-1,0},{0,0,+1}},
+  {{+1,0,0},{0,+1,0},{0,0,-1}},
+  {{+1,0,0},{0,+1,0},{0,0,+1}}
+};
+
 class Graphics3D{
 public:
   Renderer *renderer;
@@ -153,6 +178,15 @@ public:
   void triangle(Vec3 a, Vec3 b, Vec3 c){
     renderer->drawTriangle(transform.trans(a), transform.trans(b), transform.trans(c));
   }
-  void cube(double size){}
-  void octahedral(double size){}
+  #define PRIMITIVE_RENDER(COORDS) for(int i=0;i<sizeof(COORDS)/sizeof(COORDS[0]);i++){\
+    triangle(COORDS[i][0],COORDS[i][1],COORDS[i][2]);\
+  }
+  #define SCALE_PRIMITIVE_RENDER(COORDS,scale) for(int i=0;i<sizeof(COORDS)/sizeof(COORDS[0]);i++){\
+    Vec3 p[3];for(int j=0;j<3;j++){p[j]=COORDS[i][j];p[j].x*=scale;p[j].y*=scale;p[j].z*=scale;}\
+    triangle(p[0],p[1],p[2]);\
+  }
+  void cube(){PRIMITIVE_RENDER(CUBE_COORDS);}
+  void cube(double scale){SCALE_PRIMITIVE_RENDER(CUBE_COORDS,scale);}
+  void octahedron(){PRIMITIVE_RENDER(OCTAHEDRON_COORDS);}
+  void octahedron(double scale){SCALE_PRIMITIVE_RENDER(OCTAHEDRON_COORDS,scale);}
 };
