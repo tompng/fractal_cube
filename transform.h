@@ -1,6 +1,6 @@
 #include <math.h>
 
-typedef struct{double x,y,z;}Point;
+typedef struct{double x,y,z;}Vec3;
 
 class Matrix3{
 public:
@@ -36,8 +36,8 @@ public:
     }
     return out;
   }
-  Point trans(Point p){
-    return (Point){
+  Vec3 trans(Vec3 p){
+    return (Vec3){
       m[0][0]*p.x+m[0][1]*p.y+m[0][2]*p.z,
       m[1][0]*p.x+m[1][1]*p.y+m[1][2]*p.z,
       m[2][0]*p.x+m[2][1]*p.y+m[2][2]*p.z
@@ -47,24 +47,24 @@ public:
 
 class Transform{
 public:
-  Point position;
+  Vec3 position;
   double scaleRatio;
   Matrix3 matrix;
   Transform(){scaleRatio = 1;}
-  Transform(Point p,double s,Matrix3 m){
+  Transform(Vec3 p,double s,Matrix3 m){
     scaleRatio = s;
     position = p;
     matrix = m;
   }
   void identity(){
-    position = (Point){0,0,0};
+    position = (Vec3){0,0,0};
     scaleRatio = 1;
     matrix.identity();
   }
   void scale(double s){
     scaleRatio *= s;
   }
-  void translate(Point p){
+  void translate(Vec3 p){
     position = trans(p);
   }
   void rotate(double nx, double ny, double nz, double rot){
@@ -78,8 +78,8 @@ public:
   Transform mult(Transform t){
     return Transform(trans(t.position), scaleRatio*t.scaleRatio, matrix.mult(t.matrix));
   }
-  Point trans(Point p){
+  Vec3 trans(Vec3 p){
     p=matrix.trans(p);
-    return (Point){position.x+scaleRatio*p.x, position.y+scaleRatio*p.y, position.z+scaleRatio*p.z};
+    return (Vec3){position.x+scaleRatio*p.x, position.y+scaleRatio*p.y, position.z+scaleRatio*p.z};
   }
 };

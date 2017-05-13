@@ -4,17 +4,17 @@
 
 double fracScale;
 #define SUBCOUNT 6
-Point fracSubs[SUBCOUNT];
+Vec3 fracSubs[SUBCOUNT];
 void setFractal(double fscale){
   fracScale=fscale;
   double l=1-fracScale;
   l/=1.2;
-  fracSubs[0]=(Point){+l,0,0};
-  fracSubs[1]=(Point){-l,0,0};
-  fracSubs[2]=(Point){0,+l,0};
-  fracSubs[3]=(Point){0,-l,0};
-  fracSubs[4]=(Point){0,0,+l};
-  fracSubs[5]=(Point){0,0,-l};
+  fracSubs[0]=(Vec3){+l,0,0};
+  fracSubs[1]=(Vec3){-l,0,0};
+  fracSubs[2]=(Vec3){0,+l,0};
+  fracSubs[3]=(Vec3){0,-l,0};
+  fracSubs[4]=(Vec3){0,0,+l};
+  fracSubs[5]=(Vec3){0,0,-l};
 }
 
 void sort(int n,double*arr,int*indices){
@@ -35,7 +35,7 @@ void sort(int n,double*arr,int*indices){
   }
 }
 
-Point CUBE[12][3]={
+Vec3 CUBE[12][3]={
   {{+1,+1,+1},{+1,-1,+1},{+1,-1,-1}},
   {{+1,+1,+1},{+1,+1,-1},{+1,-1,-1}},
   {{-1,+1,+1},{-1,-1,+1},{-1,-1,-1}},
@@ -51,7 +51,7 @@ Point CUBE[12][3]={
   {{+1,-1,+1},{+1,-1,-1},{-1,-1,-1}},
   {{+1,-1,+1},{-1,-1,+1},{-1,-1,-1}},
 };
-Point OCTAHEDRAL[8][3]={
+Vec3 OCTAHEDRAL[8][3]={
   {{-1,0,0},{0,-1,0},{0,0,-1}},
   {{-1,0,0},{0,-1,0},{0,0,+1}},
   {{-1,0,0},{0,+1,0},{0,0,-1}},
@@ -75,8 +75,7 @@ void fractal(Graphics3D g){
   double dist[SUBCOUNT];
   int sorted[SUBCOUNT];
   for(int i=0;i<SUBCOUNT;i++){
-    Point p=fracSubs[i];
-    dist[i]=g.cameraDistance(p);
+    dist[i]=g.cameraDistance(fracSubs[i]);
   }
   sort(SUBCOUNT,dist,sorted);
   for(int i=0;i<SUBCOUNT;i++){

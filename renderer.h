@@ -8,12 +8,12 @@ public:
   void set(double rotxy, double rotz, double camz=2, double _zoom=2){
     zoom=_zoom;
     transform.identity();
-    transform.translate((Point){0,0,zoom});
+    transform.translate((Vec3){0,0,zoom});
     transform.rotate(0,1,0,rotxy);
     transform.rotate(1,0,0,M_PI/2+rotz);
   }
-  double distance(Point p){
-    Point tpos = transform.trans(p);
+  double distance(Vec3 p){
+    Vec3 tpos = transform.trans(p);
     return tpos.z;
   }
 };
@@ -58,7 +58,7 @@ public:
       }\
     }\
   };
-  void drawSphere(Point p, double cr){
+  void drawSphere(Vec3 p, double cr){
     p=camera.transform.trans(p);
     double cx=p.x,cy=p.y,cz=p.z;
     SPHERE_EACH({
@@ -71,7 +71,7 @@ public:
   void clear(){
     for(int x=0;x<size;x++)for(int y=0;y<size;y++)depth->data[x][y]=color->data[x][y]=0;
   }
-  bool testSphere(Point p, double cr){
+  bool testSphere(Vec3 p, double cr){
     p=camera.transform.trans(p);
     double cx=p.x,cy=p.y,cz=p.z;
     SPHERE_EACH({
@@ -80,7 +80,7 @@ public:
     })
     return false;
   }
-  void drawTriangle(Point a, Point b, Point c){
+  void drawTriangle(Vec3 a, Vec3 b, Vec3 c){
     a=camera.transform.trans(a);
     b=camera.transform.trans(b);
     c=camera.transform.trans(c);
@@ -131,26 +131,26 @@ public:
   void scale(double s){transform.scale(s);}
   void rotate(double nx, double ny, double nz, double rot){transform.rotate(nx,ny,nz,rot);}
   void rotate(double x, double y, double z){transform.rotate(x,y,z);}
-  void translate(Point p){transform.translate(p);}
-  double pixelSize(Point p){
+  void translate(Vec3 p){transform.translate(p);}
+  double pixelSize(Vec3 p){
     return renderer->size*transform.scaleRatio/cameraDistance(p)*renderer->camera.zoom;
   }
-  double cameraDistance(Point p){
-    Point gpos = transform.trans(p);
-    Point cpos = renderer->camera.transform.trans(gpos);
+  double cameraDistance(Vec3 p){
+    Vec3 gpos = transform.trans(p);
+    Vec3 cpos = renderer->camera.transform.trans(gpos);
     return cpos.z;
   }
-  double pixelSize(){return pixelSize((Point){0,0,0});}
-  double cameraDistance(){return cameraDistance((Point){0,0,0});}
-  bool test(Point p, double r){
+  double pixelSize(){return pixelSize((Vec3){0,0,0});}
+  double cameraDistance(){return cameraDistance((Vec3){0,0,0});}
+  bool test(Vec3 p, double r){
     return renderer->testSphere(transform.trans(p), transform.scaleRatio*r);
   }
-  void sphere(Point p, double r){
+  void sphere(Vec3 p, double r){
     renderer->drawSphere(transform.trans(p), transform.scaleRatio*r);
   }
-  bool test(double r){return test((Point){0, 0, 0}, r);}
-  void sphere(double r){return sphere((Point){0, 0, 0}, r);}
-  void triangle(Point a, Point b, Point c){
+  bool test(double r){return test((Vec3){0, 0, 0}, r);}
+  void sphere(double r){return sphere((Vec3){0, 0, 0}, r);}
+  void triangle(Vec3 a, Vec3 b, Vec3 c){
     renderer->drawTriangle(transform.trans(a), transform.trans(b), transform.trans(c));
   }
   void cube(double size){}
