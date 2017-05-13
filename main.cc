@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <math.h>
 #include "image.h"
-typedef struct{double x,y,z;}Point;
+#include "transform.h"
+
+
 class Canvas{
 public:
   Array2D<double>*depth;
