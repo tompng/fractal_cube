@@ -5,9 +5,8 @@
 double fracScale;
 #define SUBCOUNT 6
 Point fracSubs[SUBCOUNT];
-void initCam(Renderer*renderer,double xytheta,double ztheta,double fscale){
+void setFractal(double fscale){
   fracScale=fscale;
-  renderer->camera.set(xytheta,ztheta,2);
   double l=1-fracScale;
   l/=1.2;
   fracSubs[0]=(Point){+l,0,0};
@@ -110,12 +109,14 @@ void renderer2img(Renderer*renderer,Image*img){
 int main(){
   Image *img = new Image(1024, 1024);
   Renderer renderer(1024);
+  Graphics3D g(&renderer);
   for(int i=0;i<=120;i++){
     renderer.clear();
     double t=i/120.0;
     t*=2-t;
     double t2=i/100.0;t2=t2>1?1:t2;t2*=2-t2;
-    initCam(&renderer,0.3+10*t,M_PI/2+cos(4*t),t2*0.5);
+    renderer.camera.set(0.3+10*t, M_PI/2+cos(4*t), 2);
+    setFractal(t2*0.5);
     fractal(&renderer,0,0,0,1);
     renderer2img(&renderer,img);
     char filename[128];
