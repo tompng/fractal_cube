@@ -122,3 +122,19 @@ public:
     }
   }
 };
+
+class Graphics3D{
+public:
+  Renderer *renderer;
+  Transform transform;
+  Graphics3D(Renderer *r){renderer = r;}
+  void scale(double s){transform.scale(s);}
+  void rotate(double nx, double ny, double nz, double rot){transform.rotate(nx,ny,nz,rot);}
+  void rotate(double x, double y, double z){transform.rotate(x,y,z);}
+  void translate(Point p){transform.translate(p);}
+  double renderSize(Point p){
+    Point gpos = transform.trans(p);
+    Point cpos = renderer->camera.transform.trans(gpos);
+    return renderer->size/cpos.z*renderer->camera.zoom;
+  }
+};

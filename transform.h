@@ -77,6 +77,10 @@ public:
     position = rotate.trans(position);
     matrix = rotate.mult(matrix);
   }
+  void rotate(double x, double y, double z){
+    double r=sqrt(x*x+y*y+z*z);
+    if(r)rotate(x/r, y/r, z/r, r);
+  }
   Transform mult(Transform t){
     return Transform(trans(t.position), scaleRatio*t.scaleRatio, matrix.mult(t.matrix));
   }
