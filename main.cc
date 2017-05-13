@@ -10,7 +10,7 @@ public:
   // Camera *camera;
   int size;
   Canvas(int _size){
-    zoom = 1.5;
+    zoom = 2;
     size = _size;
     depth = new Array2D<double>(size, size);
     color = new Array2D<double>(size, size);
@@ -60,7 +60,7 @@ public:
     })
     return false;
   }
-  void drawPolygon(Point a, Point b, Point c){
+  void drawTriangle(Point a, Point b, Point c){
     if(a.z<0||b.z<0||c.z<0)return;
     double ax=zoom*a.x/a.z,ay=zoom*a.y/a.z;
     double bx=zoom*b.x/b.z,by=zoom*b.y/b.z;
@@ -102,17 +102,20 @@ public:
 
 
 double xycos,xysin,zcos,zsin,fracScale,fracBottomR,fracBottomZ;
-#define SUBCOUNT 8
+#define SUBCOUNT 6
 Point fracSubs[SUBCOUNT];
 void initCam(double xytheta,double ztheta,double fscale){
   fracScale=fscale;
   xycos=cos(xytheta);xysin=sin(xytheta);
   zcos=cos(ztheta);zsin=sin(ztheta);
   double l=1-fracScale;
-  l/=sqrt(3);
-  for(int i=0;i<8;i++){
-    fracSubs[i]=(Point){l*(i%2*2-1),l*(i/2%2*2-1),l*(i/4%2*2-1)};
-  }
+  l/=1.2;
+  fracSubs[0]=(Point){+l,0,0};
+  fracSubs[1]=(Point){-l,0,0};
+  fracSubs[2]=(Point){0,+l,0};
+  fracSubs[3]=(Point){0,-l,0};
+  fracSubs[4]=(Point){0,0,+l};
+  fracSubs[5]=(Point){0,0,-l};
 }
 
 void trans(double x,double y,double z,double*tx,double*ty,double*tz){
@@ -140,12 +143,48 @@ void sort(int n,double*arr,int*indices){
   }
 }
 
+int CUBE[12][3][3]={
+  {{+1,+1,+1},{+1,-1,+1},{+1,-1,-1}},
+  {{+1,+1,+1},{+1,+1,-1},{+1,-1,-1}},
+  {{-1,+1,+1},{-1,-1,+1},{-1,-1,-1}},
+  {{-1,+1,+1},{-1,+1,-1},{-1,-1,-1}},
+
+  {{+1,+1,+1},{-1,+1,+1},{-1,-1,+1}},
+  {{+1,+1,+1},{+1,-1,+1},{-1,-1,+1}},
+  {{+1,+1,-1},{-1,+1,-1},{-1,-1,-1}},
+  {{+1,+1,-1},{+1,-1,-1},{-1,-1,-1}},
+
+  {{+1,+1,+1},{+1,+1,-1},{-1,+1,-1}},
+  {{+1,+1,+1},{-1,+1,+1},{-1,+1,-1}},
+  {{+1,-1,+1},{+1,-1,-1},{-1,-1,-1}},
+  {{+1,-1,+1},{-1,-1,+1},{-1,-1,-1}},
+};
+int OCTAHEDRAL[8][3][3]={
+  {{-1,0,0},{0,-1,0},{0,0,-1}},
+  {{-1,0,0},{0,-1,0},{0,0,+1}},
+  {{-1,0,0},{0,+1,0},{0,0,-1}},
+  {{-1,0,0},{0,+1,0},{0,0,+1}},
+  {{+1,0,0},{0,-1,0},{0,0,-1}},
+  {{+1,0,0},{0,-1,0},{0,0,+1}},
+  {{+1,0,0},{0,+1,0},{0,0,-1}},
+  {{+1,0,0},{0,+1,0},{0,0,+1}}
+};
+
+
 void fractal(Canvas*canvas, double x, double y, double z, double r){
   double tx,ty,tz;
   trans(x,y,z,&tx,&ty,&tz);
   if(r/tz<0.001){canvas->drawSphere(tx,ty,tz,r);return;}
   if(!canvas->testSphere(tx,ty,tz,r))return;
-  canvas->drawSphere(tx,ty,tz,r*(1-fracScale));
+  double l=r*(1-fracScale)/1.7;
+  for(int i=0;i<12;i++){
+    Point p[3];
+    for(int j=0;j<3;j++){
+      trans(x+l*CUBE[i][j][0],y+l*CUBE[i][j][1],z+l*CUBE[i][j][2],&p[j].x,&p[j].y,&p[j].z);
+    }
+    canvas->drawTriangle(p[0],p[1],p[2]);
+  }
+
   double dist[SUBCOUNT];
   int sorted[SUBCOUNT];
   for(int i=0;i<SUBCOUNT;i++){
@@ -162,18 +201,20 @@ void fractal(Canvas*canvas, double x, double y, double z, double r){
 }
 
 void canvas2img(Canvas*canvas,Image*img){
-  double min=0;
+  double min=0,max=0;
   for(int x=0;x<img->w;x++)for(int y=0;y<img->h;y++){
     double d=canvas->depth->data[x][y];
     if(!min||(d&&d<min))min=d;
+    if(!max||(d&&d>max))max=d;
   }
   for(int x=0;x<img->w;x++)for(int y=0;y<img->h;y++){
     double d=canvas->depth->data[x][y];
-    double c=d?1/(1+4*(d-min)):0;
+    double c=d?2.4-d:0;
+    if(c<0)c=0;
     Color color={
-      0xff*c,
-      0xff*(c*0.8+0.2*(0.5+0.5*sin(17*canvas->depth->data[x][y]))),
-      0xff*(c*0.8+0.2*(0.5+0.5*sin(32*canvas->depth->data[x][y])))
+      0xff*(c/2>1?1:c/2),
+      0xff*(c>1?1:c),
+      0xff*(c*2>1?1:c*2)
     };
     img->data[x][y] = color;
   }
@@ -181,11 +222,12 @@ void canvas2img(Canvas*canvas,Image*img){
 int main(){
   Image *img = new Image(1024, 1024);
   Canvas canvas(1024);
-  for(int i=0;i<=100;i++){
+  for(int i=0;i<=120;i++){
     canvas.clear();
-    double t=i/100.0;
+    double t=i/120.0;
     t*=2-t;
-    initCam(0.3+10*t,M_PI/2+cos(4*t),t*0.5);
+    double t2=i/100.0;t2=t2>1?1:t2;t2*=2-t2;
+    initCam(0.3+10*t,M_PI/2+cos(4*t),t2*0.5);
     fractal(&canvas,0,0,0,1);
     canvas2img(&canvas,img);
     char filename[128];
