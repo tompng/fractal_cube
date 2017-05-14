@@ -36,25 +36,60 @@ void sort(int n,double*arr,int*indices){
 }
 
 
-void fractal(Graphics3D g){
+void fractal(Graphics3D g,int level,double depth){
+  if(level>depth){g.cube(1);return;}
   double pixel = g.pixelSize();
-  if(pixel<1){g.sphere(1);return;}
-  if(!g.test(1))return;
-  g.cube((1-fracScale)/1.7);
-  double dist[SUBCOUNT];
+  if(pixel<0.5){g.cube(1);return;}
+  if(!g.test(1.732))return;
+  // g.cube((1-fracScale)/1.7);
+  // double dist[SUBCOUNT];
+  // int sorted[SUBCOUNT];
+  // for(int i=0;i<SUBCOUNT;i++){
+  //   dist[i]=g.cameraDistance(fracSubs[i]);
+  // }
+  // sort(SUBCOUNT,dist,sorted);
+  // for(int i=0;i<SUBCOUNT;i++){
+  //   Graphics3D g2=g;
+  //   g2.translate(fracSubs[sorted[i]]);
+  //   g2.scale(fracScale);
+  //   int ii=sorted[i];
+  //   double rot=fracScale*16;
+  //   g2.rotate(sin(ii*12345+6)*rot,sin(ii*78901+2)*rot,sin(ii*23456+7)*rot);
+  //   fractal(g2,level+1,depth);
+  // }
+  Graphics3D gs[8];
+  double dist[8];
   int sorted[SUBCOUNT];
-  for(int i=0;i<SUBCOUNT;i++){
-    dist[i]=g.cameraDistance(fracSubs[i]);
-  }
-  sort(SUBCOUNT,dist,sorted);
-  for(int i=0;i<SUBCOUNT;i++){
+  double l=0.5;
+  for(int i=0;i<8;i++){
     Graphics3D g2=g;
-    g2.translate(fracSubs[sorted[i]]);
-    g2.scale(fracScale);
-    int ii=sorted[i];
-    double rot=fracScale*16;
-    g2.rotate(sin(ii*12345+6)*rot,sin(ii*78901+2)*rot,sin(ii*23456+7)*rot);
-    fractal(g2);
+    double dx=(((i>>0)&1)*2-1)*l;
+    double dy=(((i>>1)&1)*2-1)*l;
+    double dz=(((i>>2)&1)*2-1)*l;
+    g2.translate((Vec3){dx,dy,dz});
+    g2.scale(0.5);
+    double a=depth-level;
+    if(a>1)a=1;
+    else a=3*a*a-2*a*a*a;
+    if(i==0||i==3||i==5||i==6){
+      double b=depth-sin(2*M_PI*depth)/2/M_PI-level;
+      if(b<0)b=0;
+      g2.rotate(sin(1234*i+1)*b,sin(2345*i+2)*b,sin(3456*i+3)*b);
+    }else{
+      g2.scale(1-0.2*a);
+    }
+    if(i%2==0)g2.rotate(1,0,0,M_PI/2);
+    if(i%3!=1)g2.rotate(0,1,0,M_PI/2);
+    if(i%4!=2)g2.rotate(0,0,1,M_PI/2);
+    if(i%2!=1)g2.rotate(0,1,0,M_PI);
+    if(i%3!=2)g2.rotate(0,0,1,M_PI);
+    if(i%4!=0)g2.rotate(1,0,0,M_PI);
+    gs[i]=g2;
+    dist[i]=g2.cameraDistance();
+  }
+  sort(8,dist,sorted);
+  for(int i=0;i<8;i++){
+    fractal(gs[sorted[i]],level+1,depth);
   }
 }
 
@@ -83,12 +118,11 @@ int main(){
   for(int i=0;i<=120;i++){
     renderer.clear();
     double t=i/120.0;
-    t*=2-t;
-    double t2=i/100.0;t2=t2>1?1:t2;t2*=2-t2;
-    renderer.camera.set(0.3+10*t, M_PI/2+cos(4*t), 2);
+    double t2=3*t*t-2*t*t*t;
+    renderer.camera.set(0.3+t2, M_PI/2+cos(t2), 2);
     Graphics3D g(&renderer);
-    setFractal(t2*0.5);
-    fractal(g);
+    g.scale(0.5);
+    fractal(g,0,8*t);
     renderer2img(&renderer,img);
     char filename[128];
     sprintf(filename,"out/%d.bmp",i);

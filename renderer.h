@@ -8,7 +8,7 @@ public:
   void set(double rotxy, double rotz, double camz=2, double _zoom=2){
     zoom=_zoom;
     transform.identity();
-    transform.translate((Vec3){0,0,zoom});
+    transform.translate((Vec3){0,0,camz});
     transform.rotate(0,1,0,rotxy);
     transform.rotate(1,0,0,M_PI/2+rotz);
   }
@@ -111,7 +111,7 @@ public:
       double ab=(ax-x)*(by-y)-(ay-y)*(bx-x);
       double bc=(bx-x)*(cy-y)-(by-y)*(cx-x);
       double ca=(cx-x)*(ay-y)-(cy-y)*(ax-x);
-      if((ab>0&&bc>0&&ca>0)||(ab<0&&bc<0&&ca<0)){
+      if((ab>=0&&bc>=0&&ca>=0)||(ab<=0&&bc<=0&&ca<=0)){
         double z=pdot/(x*nx/camera.zoom+y*ny/camera.zoom+nz);
         x*=z;y*=z;
         double d=depth->data[ix][iy];
@@ -152,6 +152,7 @@ class Graphics3D{
 public:
   Renderer *renderer;
   Transform transform;
+  Graphics3D(){}
   Graphics3D(Renderer *r){renderer = r;}
   void scale(double s){transform.scale(s);}
   void rotate(double nx, double ny, double nz, double rot){transform.rotate(nx,ny,nz,rot);}
