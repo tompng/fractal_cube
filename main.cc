@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "renderer.h"
+#include "sort.h"
 
 double fracScale;
 #define SUBCOUNT 6
@@ -17,49 +18,15 @@ void setFractal(double fscale){
   fracSubs[5]=(Vec3){0,0,-l};
 }
 
-void sort(int n,double*arr,int*indices){
-  for(int i=0;i<n;i++)indices[i]=i;
-  for(int i=0;i<n-1;i++){
-    int ii=indices[i];
-    double ai=arr[ii];
-    for(int j=i+1;j<n;j++){
-      int jj=indices[j];
-      double aj=arr[jj];
-      if(aj<ai){
-        indices[i]=jj;
-        indices[j]=ii;
-        ii=jj;
-        ai=aj;
-      }
-    }
-  }
-}
-
-
 void fractal(Graphics3D g,int level,double depth){
   if(level>depth){g.cube(1);return;}
   double pixel = g.pixelSize();
   if(pixel<0.5){g.cube(1);return;}
   if(!g.test(1.732))return;
-  // g.cube((1-fracScale)/1.7);
-  // double dist[SUBCOUNT];
-  // int sorted[SUBCOUNT];
-  // for(int i=0;i<SUBCOUNT;i++){
-  //   dist[i]=g.cameraDistance(fracSubs[i]);
-  // }
-  // sort(SUBCOUNT,dist,sorted);
-  // for(int i=0;i<SUBCOUNT;i++){
-  //   Graphics3D g2=g;
-  //   g2.translate(fracSubs[sorted[i]]);
-  //   g2.scale(fracScale);
-  //   int ii=sorted[i];
-  //   double rot=fracScale*16;
-  //   g2.rotate(sin(ii*12345+6)*rot,sin(ii*78901+2)*rot,sin(ii*23456+7)*rot);
-  //   fractal(g2,level+1,depth);
-  // }
   Graphics3D gs[8];
   double dist[8];
   int sorted[SUBCOUNT];
+  int tmp[SUBCOUNT];
   double l=0.5;
   for(int i=0;i<8;i++){
     Graphics3D g2=g;
@@ -87,7 +54,7 @@ void fractal(Graphics3D g,int level,double depth){
     gs[i]=g2;
     dist[i]=g2.cameraDistance();
   }
-  sort(8,dist,sorted);
+  sort(8,dist,sorted,tmp);
   for(int i=0;i<8;i++){
     fractal(gs[sorted[i]],level+1,depth);
   }
