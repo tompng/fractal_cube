@@ -104,7 +104,7 @@ void renderer2img(Renderer*renderer,Image*img){
     double d=renderer->depth->data[x][y];
     double c=d?2.4-d:0;
     if(c<0)c=0;
-    Vec3 n = renderer->normal->data[x][y];
+    Vec3 n = renderer->camera.transform.invNormal(renderer->normal->data[x][y]);
     double dot=0.5*n.x+0.4*n.y+0.1*n.z;
     c*=0.8+0.2*dot;
     img->data[x][y] = (Color){c/2,c,c*2};

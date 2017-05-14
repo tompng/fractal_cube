@@ -43,6 +43,13 @@ public:
       m[2][0]*p.x+m[2][1]*p.y+m[2][2]*p.z
     };
   }
+  Vec3 transposeTrans(Vec3 p){
+    return (Vec3){
+      m[0][0]*p.x+m[1][0]*p.y+m[2][0]*p.z,
+      m[0][1]*p.x+m[1][1]*p.y+m[2][1]*p.z,
+      m[0][2]*p.x+m[1][2]*p.y+m[2][2]*p.z
+    };
+  }
 };
 
 class Transform{
@@ -81,5 +88,14 @@ public:
   Vec3 trans(Vec3 p){
     p=matrix.trans(p);
     return (Vec3){position.x+scaleRatio*p.x, position.y+scaleRatio*p.y, position.z+scaleRatio*p.z};
+  }
+  Vec3 inv(Vec3 p){
+    p.x=(p.x-position.x)/scaleRatio;
+    p.y=(p.y-position.y)/scaleRatio;
+    p.z=(p.z-position.z)/scaleRatio;
+    return matrix.transposeTrans(p);
+  }
+  Vec3 invNormal(Vec3 n){
+    return matrix.transposeTrans(n);
   }
 };
