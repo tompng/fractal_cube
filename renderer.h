@@ -21,15 +21,20 @@ public:
 class Renderer{
 public:
   Array2D<double>*depth;
-  Array2D<double>*color;
+  Array2D<Vec3>*normal;
+  Array2D<Vec3>*position;
+  Array2D<Vec3>*optional;
   Camera camera;
   int size;
   Renderer(int _size){
     size = _size;
     depth = new Array2D<double>(size, size);
-    color = new Array2D<double>(size, size);
+    normal = new Array2D<Vec3>(size, size);
+    position = new Array2D<Vec3>(size, size);
+    optional = new Array2D<Vec3>(size, size);
   }
-  #define SPHERE_EACH(code) if(cz>cr){\
+#define SPHERE_EACH_BEFORE \
+    if(cz>cr){\
     double __distx=sqrt(cx*cx+cz*cz-cr*cr);\
     double __disty=sqrt(cy*cy+cz*cz-cr*cr);\
     double __xmin=camera.zoom*(cx*__distx-cr*cz)/(__distx*cz+cr*cx);\
@@ -53,23 +58,34 @@ public:
         if(det<0)continue;\
         double z=(vc-sqrt(det))/vv;\
         x*=z;\
-        y*=z;\
-        code\
+        y*=z;
+#define SPHERE_EACH_AFTER \
       }\
     }\
   };
-  void drawSphere(Vec3 p, double cr){
+#define SPHERE_EACH(code) SPHERE_EACH_BEFORE code SPHERE_EACH_AFTER
+
+  void drawSphere(Vec3 p, double cr, Vec3 opt=(Vec3){0,0,0}){
     p=camera.transform.trans(p);
     double cx=p.x,cy=p.y,cz=p.z;
-    SPHERE_EACH({
+    SPHERE_EACH_BEFORE
       double d=depth->data[ix][iy];
       if(!d||z<d){
         depth->data[ix][iy]=z;
+        int a[3]={1,2,3};
+        position->data[ix][iy]=(Vec3){x,y,z};
+        normal->data[ix][iy]=(Vec3){(x-p.x)/cr,(y-p.y)/cr,(z-p.z)/cr};
+        optional->data[ix][iy]=opt;
       }
-    })
+    SPHERE_EACH_AFTER
   }
   void clear(){
-    for(int x=0;x<size;x++)for(int y=0;y<size;y++)depth->data[x][y]=color->data[x][y]=0;
+    for(int x=0;x<size;x++)for(int y=0;y<size;y++){
+      depth->data[x][y]=0;
+      position->data[x][y]=(Vec3){0,0,0};
+      normal->data[x][y]=(Vec3){0,0,0};
+      optional->data[x][y]=(Vec3){0,0,0};
+    }
   }
   bool testSphere(Vec3 p, double cr){
     p=camera.transform.trans(p);
@@ -80,7 +96,7 @@ public:
     })
     return false;
   }
-  void drawTriangle(Vec3 a, Vec3 b, Vec3 c){
+  void drawTriangle(Vec3 a, Vec3 b, Vec3 c, Vec3 opt=(Vec3){0,0,0}){
     a=camera.transform.trans(a);
     b=camera.transform.trans(b);
     c=camera.transform.trans(c);
@@ -117,6 +133,10 @@ public:
         double d=depth->data[ix][iy];
         if(!d||z<d){
           depth->data[ix][iy]=z;
+          position->data[ix][iy]=(Vec3){x,y,z};
+          double nr=sqrt(nx*nx+ny*ny+nz*nz)*(nz<0?1:-1);
+          normal->data[ix][iy]=(Vec3){nx/nr,ny/nr,nz/nr};
+          optional->data[ix][iy]=opt;
         }
       }
     }
