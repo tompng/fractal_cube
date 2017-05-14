@@ -21,9 +21,9 @@ public:
 };
 
 typedef struct {
-  char r;
-  char g;
-  char b;
+  double r;
+  double g;
+  double b;
 } Color;
 
 class Image : public Array2D<Color>{
@@ -37,9 +37,9 @@ public:
     for(int y=0;y<h;y++){
       for(int x=0;x<w;x++){
         Color c = data[x][y];
-        line[4*x+0] = c.b;
-        line[4*x+1] = c.g;
-        line[4*x+2] = c.r;
+        line[4*x+0] = 0xff*(c.b<0?0:c.b>1?1:c.b)+0.5;
+        line[4*x+1] = 0xff*(c.g<0?0:c.g>1?1:c.g)+0.5;
+        line[4*x+2] = 0xff*(c.r<0?0:c.r>1?1:c.r)+0.5;
         line[4*x+3] = 0xff;
       }
       fwrite(line, 1, 4*w, fp);

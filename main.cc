@@ -103,13 +103,7 @@ void renderer2img(Renderer*renderer,Image*img){
   for(int x=0;x<img->w;x++)for(int y=0;y<img->h;y++){
     double d=renderer->depth->data[x][y];
     double c=d?2.4-d:0;
-    if(c<0)c=0;
-    Color color={
-      0xff*(c/2>1?1:c/2),
-      0xff*(c>1?1:c),
-      0xff*(c*2>1?1:c*2)
-    };
-    img->data[x][y] = color;
+    img->data[x][y] = (Color){c/2,c,c*2};
   }
 }
 int main(){
