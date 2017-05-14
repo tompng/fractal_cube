@@ -33,7 +33,7 @@ public:
     position = new Array2D<Vec3>(size, size);
     optional = new Array2D<Vec3>(size, size);
   }
-#define SPHERE_EACH_BEFORE \
+#define SPHERE_EACH(...) \
     if(cz>cr){\
     double __distx=sqrt(cx*cx+cz*cz-cr*cr);\
     double __disty=sqrt(cy*cy+cz*cz-cr*cr);\
@@ -58,17 +58,16 @@ public:
         if(det<0)continue;\
         double z=(vc-sqrt(det))/vv;\
         x*=z;\
-        y*=z;
-#define SPHERE_EACH_AFTER \
+        y*=z;\
+        __VA_ARGS__\
       }\
     }\
   };
-#define SPHERE_EACH(code) SPHERE_EACH_BEFORE code SPHERE_EACH_AFTER
 
   void drawSphere(Vec3 p, double cr, Vec3 opt=(Vec3){0,0,0}){
     p=camera.transform.trans(p);
     double cx=p.x,cy=p.y,cz=p.z;
-    SPHERE_EACH_BEFORE
+    SPHERE_EACH({
       double d=depth->data[ix][iy];
       if(!d||z<d){
         depth->data[ix][iy]=z;
@@ -77,7 +76,7 @@ public:
         normal->data[ix][iy]=(Vec3){(x-p.x)/cr,(y-p.y)/cr,(z-p.z)/cr};
         optional->data[ix][iy]=opt;
       }
-    SPHERE_EACH_AFTER
+    })
   }
   void clear(){
     for(int x=0;x<size;x++)for(int y=0;y<size;y++){
